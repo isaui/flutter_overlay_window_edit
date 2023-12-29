@@ -36,6 +36,7 @@ public class FlutterOverlayWindowPlugin implements
 
     private MethodChannel channel;
     private Context context;
+    private static Context staticContext;
     private Activity mActivity;
     private BasicMessageChannel<Object> messenger;
     private Result pendingResult;
@@ -44,6 +45,10 @@ public class FlutterOverlayWindowPlugin implements
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         this.context = flutterPluginBinding.getApplicationContext();
+        if(staticContext != null){
+                staticContext = flutterPluginBinding.getApplicationContext();
+        }
+        
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), OverlayConstants.CHANNEL_TAG);
         channel.setMethodCallHandler(this);
 
@@ -93,19 +98,19 @@ public class FlutterOverlayWindowPlugin implements
             WindowSetup.positionGravity = positionGravity;
             WindowSetup.setNotificationVisibility(notificationVisibility);
 
-            final Intent intent = new Intent(context, OverlayService.class);
+            final Intent intent = new Intent(staticContext, OverlayService.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            context.startService(intent);
+            staticContext.startService(intent);
             result.success(null);
         } else if (call.method.equals("isOverlayActive")) {
             result.success(OverlayService.isRunning);
             return;
         } else if (call.method.equals("closeOverlay")) {
             if (OverlayService.isRunning) {
-                final Intent i = new Intent(context, OverlayService.class);
+                final Intent i = new Intent(staticContext, OverlayService.class);
                 i.putExtra(OverlayService.INTENT_EXTRA_IS_CLOSE_WINDOW, true);
-                context.startService(i);
+                staticContext.startService(i);
                 result.success(true);
             }
             return;
